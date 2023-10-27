@@ -71,7 +71,6 @@ const char* get_filesystem_type(blkid_probe pr) {
 		}
 	}
 
-	blkid_free_probe(pr);
 	return result;
 }
 

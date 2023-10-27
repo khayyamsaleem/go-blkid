@@ -13,6 +13,27 @@ import (
 	"unsafe"
 )
 
+type ProbeOption func(pr C.blkid_probe) error
+
+func WithFilesystemFilter(filesystems ...string) ProbeOption {
+	return func(pr C.blkid_probe) error {
+		cfilesystems := make([]*C.char, len(filesystems)+1)
+		for i, fs := range filesystems {
+			cfilesystems[i] = C.CString(fs)
+		}
+		defer func() {
+			for _, fs := range cfilesystems {
+				C.free(unsafe.Pointer(fs))
+			}
+		}()
+
+		if C.blkid_probe_filter_superblocks_type(pr, C.BLKID_FLTR_ONLYIN, &cfilesystems[0]) < 0 {
+			return errors.New("failed to set filesystem filter")
+		}
+		return nil
+	}
+}
+
 // SupportedFilesystems lists all filesystems supported for probing by blkid
 func SupportedFilesystems() []string {
 	cFilesystems := C.list_supported_filesystems()
@@ -34,18 +55,27 @@ func SupportedFilesystems() []string {
 }
 
 // GetFilesystemTypeFromBuffer gets the filesystem type from a buffer
-func GetFilesystemTypeFromBuffer(data []byte) (string, error) {
+func GetFilesystemTypeFromBuffer(data []byte, options ...ProbeOption) (string, error) {
 	cData := (*C.char)(unsafe.Pointer(&data[0]))
-	cProbe := C.create_probe_from_buffer(cData, C.size_t(len(data)))
-
-	if cProbe == nil {
+	pr := C.create_probe_from_buffer(cData, C.size_t(len(data)))
+	if pr == nil {
 		return "", errors.New("failed to create probe from buffer")
 	}
+	defer C.blkid_free_probe(pr)
 
-	fsType := C.get_filesystem_type(cProbe)
+	for _, opt := range options {
+		if err := opt(pr); err != nil {
+			return "", err
+		}
+	}
+
+	fsType := C.get_filesystem_type(pr)
 	if fsType == nil {
 		return "", errors.New("failed to determine fs type from probe")
 	}
 
-	return C.GoString(fsType), nil
+	res := C.GoString(fsType)
+	C.free(unsafe.Pointer(fsType))
+
+	return res, nil
 }

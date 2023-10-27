@@ -20,6 +20,18 @@ func TestGetFilesystemTypeFromBuffer_EXT2(t *testing.T) {
 	}
 }
 
+func TestGetFilesystemTypeFromBuffer_WithFilter(t *testing.T) {
+	buffer := make([]byte, 64*1024)
+
+	// Insert the ext series magic number at the appropriate offset
+	copy(buffer[0x438:], []byte{0x53, 0xEF}) // ext series magic number: 0xEF53
+
+	fsType, err := GetFilesystemTypeFromBuffer(buffer, WithFilesystemFilter("xfs"))
+	if err == nil {
+		t.Fatalf("Expected error because reported filesystem %s is not in filesystem filter", fsType)
+	}
+}
+
 func TestSupportedFilesystems(t *testing.T) {
 	supportedFS := SupportedFilesystems()
 	if len(supportedFS) == 0 {
