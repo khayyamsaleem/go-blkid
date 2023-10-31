@@ -50,3 +50,26 @@ func TestSupportedFilesystems(t *testing.T) {
 		t.Logf("- %s", fs)
 	}
 }
+
+func TestGetBlockSizeFromBuffer(t *testing.T) {
+    buffer := make([]byte, 64*1024)
+
+    // Insert the ext series magic number
+    copy(buffer[0x438:], []byte{0x53, 0xEF}) // ext series magic number: 0xEF53
+
+    // Insert s_log_block_size to represent block size of 4096
+    // superblock for ext series starts at 0x400 (1024) and s_log_block_size is located at offset 0x18 (24)
+    // set flag to 2 because 2^2 * 1024 = 4096
+    buffer[0x400+0x18] = 2
+
+    blocksize, err := GetBlockSizeFromBuffer(buffer)
+    if err != nil {
+        t.Fatalf("Failed to get block size from buffer: %s", err)
+    }
+    if blocksize != 4096 {
+        t.Fatalf("Expected block size of 4096, but got %d", blocksize)
+    }
+
+    t.Logf("Determined block size: %d", blocksize)
+}
+

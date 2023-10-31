@@ -57,11 +57,10 @@ const char* get_filesystem_type(blkid_probe pr) {
 		return NULL;
 	}
 
+	blkid_reset_probe(pr);
 	probe_result = blkid_do_probe(pr);
 	if (probe_result < 0) {
 		perror("Unable to probe device.");
-	} else if (probe_result == 1) {
-		perror("empty probe");
 	} else {
 		if (blkid_probe_has_value(pr, "TYPE")) {
 			blkid_probe_lookup_value(pr, "TYPE", &fstype, NULL);
@@ -72,6 +71,34 @@ const char* get_filesystem_type(blkid_probe pr) {
 	}
 
 	return result;
+}
+
+// Perform the probe and extract blocksize
+int get_blocksize(blkid_probe pr) {
+	int probe_result;
+	const char* value = NULL;
+	int result = -1;
+
+	if (!pr) {
+		perror("Null probe provided.");
+		return -1;
+	}
+
+	blkid_reset_probe(pr);
+	probe_result = blkid_do_probe(pr);
+	if (probe_result < 0) {
+		perror("Unable to probe device.");
+	} else {
+		if (blkid_probe_has_value(pr, "BLOCK_SIZE")) {
+			blkid_probe_lookup_value(pr, "BLOCK_SIZE", &value, NULL);
+			if (value) {
+				result = atoi(value);
+			}
+		}
+	}
+
+	return result;
+
 }
 
 // assuming at most 100 supported filesystems
