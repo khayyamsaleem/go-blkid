@@ -53,12 +53,18 @@ void check_device_filesystem_types() {
             continue;
         }
 
+
         const char *fs_type = get_filesystem_type(pr);
-        if (fs_type) {
-            printf("Device %s has filesystem type: %s\n", path, fs_type);
-        } else {
-            printf("Device %s has an unknown or no filesystem.\n", path);
-        }
+	const int block_size = get_blocksize(pr);
+        if (fs_type && block_size > 0) {
+            printf("name=%s fstype=%s block_size=%d\n", path, fs_type, block_size);
+        } else if (fs_type) {
+            printf("name=%s fstype=%s block_size=unknown\n", path, fs_type);
+        } else if (block_size > 0) {
+            printf("name=%s fstype=unknown block_size=%d\n", path, block_size);
+	} else {
+            printf("name=%s fstype=unknown block_size=unknown\n", path);
+	}
         free((void*)fs_type);
     }
 

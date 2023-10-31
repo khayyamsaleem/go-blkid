@@ -79,3 +79,27 @@ func GetFilesystemTypeFromBuffer(data []byte, options ...ProbeOption) (string, e
 
 	return res, nil
 }
+
+// GetBlockSizeFromBuffer gets the filesystem block size from a buffer
+func GetBlockSizeFromBuffer(data []byte, options ...ProbeOption) (uint64, error) {
+    cData := (*C.char)(unsafe.Pointer(&data[0]))
+    pr := C.create_probe_from_buffer(cData, C.size_t(len(data)))
+    if pr == nil {
+        return 0, errors.New("failed to create probe from buffer")
+    }
+    defer C.blkid_free_probe(pr)
+
+    for _, opt := range options {
+        if err := opt(pr); err != nil {
+            return 0, err
+        }
+    }
+
+    blocksize := C.get_blocksize(pr)
+    if blocksize < 0 {
+        return 0, errors.New("failed to determine block size from probe")
+    }
+
+    return uint64(blocksize), nil
+}
+
