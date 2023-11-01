@@ -1,1 +1,3 @@
 package memblkid
+
+import "C"

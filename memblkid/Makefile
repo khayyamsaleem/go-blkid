@@ -1,7 +1,7 @@
 CC = gcc
 
-INCLUDE_DIR = include
-SRC_DIR = src
+INCLUDE_DIR = .
+SRC_DIR = .
 TEST_DIR = tests
 BUILD_DIR = build
 

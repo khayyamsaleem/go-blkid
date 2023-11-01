@@ -1,9 +1,9 @@
 package fs
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../memblkid/include
+#cgo CFLAGS: -I${SRCDIR}/../memblkid
 #cgo LDFLAGS: -lblkid
-#include "../memblkid/src/memblkid.c"
+#include <stdlib.h>
 #include "memblkid.h"
 */
 import "C"
